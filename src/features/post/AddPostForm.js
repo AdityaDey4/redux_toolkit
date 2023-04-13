@@ -1,19 +1,18 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { addNewPost } from "./postSlice";
 import { selectAllUsers } from "../users/userSlice";
+import { useAddNewPostMutation } from "./postSlice";
 
 const AddPostForm = () => {
 
-    const dispatch = useDispatch();
+    const [ addNewPost, {isLoading}] = useAddNewPostMutation();
     const navigate = useNavigate();
 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [userId, setUserId] = useState("");
-    const [addRequestStatus, setAddRequestStatus] = useState("idle");
 
     const users = useSelector(selectAllUsers);
 
@@ -21,14 +20,14 @@ const AddPostForm = () => {
     const onContentChanged = e => setContent(e.target.value);
     const onAuthorChanged = e => setUserId(e.target.value);
 
-    const canSave = [title, content, userId].every(Boolean) && addRequestStatus === 'idle';
+    const canSave = [title, content, userId].every(Boolean) && !isLoading;
 
-    const onSavePostClicked = ()=> {
+    const onSavePostClicked = async ()=> {
         
         if(canSave) {
             try{
-                setAddRequestStatus("pending");
-                dispatch(addNewPost({title, body:content, userId})).unwrap();
+                
+                await addNewPost({title, body : content, userId}).unwrap();
     
                 setTitle('');
                 setContent('');
@@ -36,8 +35,6 @@ const AddPostForm = () => {
                 navigate('/');
             } catch(err) {
                 console.error("Failed to save the post", err);
-            }finally {
-                setAddRequestStatus('idle');
             }
         }
     }
